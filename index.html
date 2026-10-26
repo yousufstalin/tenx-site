@@ -11,7 +11,12 @@
 <meta property="og:description" content="Signals, daily entry zones, education and copy trading, connected around your own Markets Vox account.">
 <meta property="og:image" content="tenx-icon.png">
 <link rel="icon" href="tenx-icon.png">
-<link rel="apple-touch-icon" href="tenx-icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TenX">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -314,6 +319,24 @@
   .foot .links { display: flex; gap: 18px; flex-wrap: wrap; margin: 4px 0 18px; font-size: 13px; color: var(--muted); }
   .foot .links a:hover { color: #fff; }
 
+  /* ---------- add to home screen hint ---------- */
+  .install {
+    position: fixed; z-index: 55; max-width: 480px; margin: 0 auto;
+    left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    display: flex; align-items: center; gap: 12px; padding: 14px 12px 14px 14px; border-radius: 18px;
+    background: rgba(22,22,26,.94); border: 1px solid var(--line-hi);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 18px 50px -12px rgba(0,0,0,.85);
+    animation: slideup .45s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes slideup { from { transform: translateY(130%); } }
+  .install-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+  .install-text strong { font-size: 14.5px; font-weight: 600; color: var(--text); }
+  .install-text b { font-weight: 600; color: #d6d6da; }
+  .install .share { width: 15px; height: 15px; vertical-align: -2px; color: var(--blue); }
+  .install-close { margin-left: auto; width: 34px; height: 34px; border-radius: 10px; border: 0; cursor: pointer; display: grid; place-items: center; flex: none; background: rgba(255,255,255,.06); color: #b9b9be; }
+
   @media (min-width: 760px) {
     :root { --gutter: 32px; }
     .grid { grid-template-columns: 1fr 1fr; }
@@ -355,6 +378,7 @@
     <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M8 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2"/></symbol>
   </defs>
 </svg>
 
@@ -612,6 +636,15 @@
   </section>
 </main>
 
+<div class="install" id="install" hidden role="dialog" aria-label="Add TenX to your Home Screen">
+  <span class="glyph" aria-hidden="true">X</span>
+  <div class="install-text">
+    <strong>Get the TenX app</strong>
+    <span id="installSteps">Tap <svg class="i share"><use href="#i-share"/></svg> Share, then <b>Add to Home Screen</b>.</span>
+  </div>
+  <button class="install-close" id="installClose" aria-label="Dismiss"><svg class="i"><use href="#i-x"/></svg></button>
+</div>
+
 <script>
 (function () {
   const C = window.TENX;
@@ -772,6 +805,20 @@
     if (e.key === "ArrowLeft") go(idx - 1);
   });
   render();
+
+  // ---- add to home screen hint (iPhone and iPad only) ----
+  const hint = $("#install"), ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+  const inApp = /Instagram|FBAN|FBAV|FB_IAB|TikTok|Snapchat/.test(ua);
+  let dismissed = false;
+  try { dismissed = localStorage.getItem("tenx-install-dismissed") === "1"; } catch (e) {}
+  if (inApp) $("#installSteps").innerHTML = "Open this page in Safari first: tap <b>&middot;&middot;&middot;</b> at the top, then <b>Open in external browser</b>.";
+  if (ios && !standalone && !dismissed) setTimeout(() => { hint.hidden = false; }, 5000);
+  $("#installClose").addEventListener("click", () => {
+    hint.hidden = true;
+    try { localStorage.setItem("tenx-install-dismissed", "1"); } catch (e) {}
+  });
 
   // ---- starfield ----
   const sc = $("#stars"), sx2 = sc.getContext("2d");
